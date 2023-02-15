@@ -9,6 +9,7 @@ This is a follow-up experiment with modified instruction at the learning phase a
 # Components 
 - `data_raw` — contains anonymized data downloaded "as is" from a crowdsourcing platform Prolific (demographics) and a hosting for online studies Open Lab. Anonymization scipt: `scripts_r/1_anonymization.R`
 - `data_preprocessed` — files prepared for data analysis 
+- `materials/chatbot-interaction-task-v3.json` — a [Lab.JS](https://lab.js.org/) file to run the experiment.
 
 ## Demo Experiment
 You can try the [Chatbot Interaction Task v3](https://open-lab.online/test/chatbot-interaction-task-v3/63bf3f75f260f774c963e5a4) hosted at Open Lab
