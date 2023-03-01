@@ -6,9 +6,10 @@ ts_raw <- read.csv("data_raw/2023-02-13trials_anonymized_an-exp2_n-24.csv")
 
 # Learning phase ####
 ## Create a df with learning trials (but without responses)
-ts_learning_1 <- ts_raw %>% select(participant_id, fsm_number, test_condition, learning_counter, 
+ts_learning_1 <- ts_raw %>% select(participant_id, fsm_number, test_condition, learning_counter, sender, 
                                    state_current, response_current, state_next, state_1, response_1, state_2, response_2, state_3) %>% 
-  filter(state_current >=0) %>% mutate(state_1 = ifelse(learning_counter == 1, NA, #add 1st and 2nd trial data
+  filter(state_current >=0 & !(sender %in% c("control_screen_task"))) %>% 
+  mutate(state_1 = ifelse(learning_counter == 1, NA, #add 1st and 2nd trial data
                                                              ifelse(learning_counter == 2, lag(state_current), state_1)), 
                                        response_1 = ifelse(learning_counter == 1, NA, #add 1st and 2nd trial data
                                                         ifelse(learning_counter == 2, lag(response_current), response_1)), 
@@ -29,8 +30,10 @@ ts_learning_2 <- ts_raw %>% select(participant_id, learning_counter, sender, res
                                 duration)) %>% select(-duration, -sender, -response)  # account for extra time due to timeout
 
 ts_learning <-  ts_learning_1 %>% left_join(ts_learning_2) %>% 
-  mutate(response_time_lessThan300ms = ifelse(response_time <= 300, 1, 0),
-         trial_id = paste0(state_current, response_current, state_next))
+  mutate(fsm_type = ifelse(fsm_number == 21, "easy", "hard"), 
+         learning_counter = learning_counter + 1, 
+         response_time_lessThan300ms = ifelse(response_time <= 300, 1, 0),
+         trial_id = paste0(state_current, response_current, state_next)) %>% select(-fsm_number) %>% relocate(fsm_type,  .after = 1)
 
 
 n <- nrow(ts_learning %>% group_by(participant_id) %>% count())
@@ -60,8 +63,8 @@ filename <- paste0("data_preprocessed/", format(Sys.Date(),"%Y-%m-%d"), "_transi
 write.csv(transitions, filename, row.names = F)
 
 
-## Get Test Preview data as a separate dataframe (tasks only)
-### CONTROL
+# Test Preview data ####
+### CONTROL PREVIEW
 ts_preview_c_1 <- ts_raw %>% select(participant_id, learning_counter, sender, state_1, response_1, state_2, response_2, state_3, state_current, response_current, state_next) %>% 
   filter(sender %in% c("control_screen_task") & !is.na(state_current)) %>% select(-sender)
 
@@ -74,11 +77,11 @@ n <- nrow(ts_preview_c %>% group_by(participant_id) %>% count())
 filename <- paste0("data_preprocessed/", format(Sys.Date(),"%Y-%m-%d"), "_preview_control", "_an-exp2_n-",n, ".csv")
 write.csv(transitions, filename, row.names = F)
 
-### PREDICTION
-ts_preview_p_2 <- ts_raw %>% select(participant_id, learning_counter, option_1, option_2, response, correctResponse, correct, prediction_correct) %>% 
+### PREDICTION PREVIEW
+ts_preview_p_2 <- ts_raw %>% select(participant_id, learning_counter, option_1, option_2, response, correctResponse, duration, correct, prediction_correct) %>% 
   filter(!is.na(prediction_correct) & !is.na(learning_counter)) %>% mutate(correct = as.integer(correct))
 
-tmp <- ts_learning %>% select(participant_id, learning_counter, state_1, response_1, state_2, response_2, state_3, state_current, response_current, state_next)
+tmp <- ts_learning %>% select(participant_id, learning_counter, state_1, response_1, response_2, state_3, state_current, response_current, state_next)
 
 ts_preview_p <- ts_preview_p_2 %>% inner_join(tmp)
 
@@ -87,61 +90,102 @@ ts_preview_p <- ts_preview_c_1 %>% left_join(ts_preview_c_2)
 
 ### ADD PREVIEW EXPLANATION EXPORT HERE
 
-  # Prediction #### 
+
+# Prediction Test Trials ####
+ts_prediction_rt <- ts_raw %>% filter((test_prediction_counter >=0) & 
+                                        !(is.na(response))) %>% select(participant_id, trial_number = test_prediction_counter, sender, duration) %>% 
+  mutate(trial_number = trial_number + 1, 
+         response_time = ifelse(sender == "prediction_screen_response", 
+                                duration, duration + 15000)) %>% select(-duration, -sender)
+
 ts_prediction <- ts_raw %>% filter((test_prediction_counter >=0)& 
                                      !(is.na(response))) %>% 
-  select(participant_id, fsm_number, trial_number = test_prediction_counter, trial_type = exp_type, 
+  select(participant_id, fsm_number, test_condition, trial_number = test_prediction_counter, trial_type = exp_type, 
          state_1, response_1, state_2, response_2, option_1, option_2,
-         prediction_correct, response, response_correct = correct,
+         correctResponse, response, response_correct = correct,
          option_1_p, option_2_p) %>% mutate(fsm_type = ifelse(fsm_number == 21, "easy", "hard"), 
                                             trial_number = trial_number + 1, 
                                             trial_id = ifelse(trial_type == "visible", 
                                                               paste0(fsm_type,"_p_vis_", state_1, response_1, state_2, response_2, option_1, option_2), 
                                                               paste0(fsm_type,"_p_hid_", state_1, response_1, response_2, option_1, option_2))) %>% 
-  select(participant_id,fsm_type,trial_number,trial_type, trial_id, state_1:option_2_p)
+  select(participant_id,fsm_type,test_condition, trial_number,trial_type, trial_id, state_1:option_2_p)
+
+ts_prediction <- ts_prediction %>% left_join(ts_prediction_rt)
 
 n <- nrow(ts_prediction %>% group_by(participant_id) %>% count())
 filename <- paste0("data_preprocessed/", format(Sys.Date(),"%Y-%m-%d"), "_test_prediction_", "_an-exp2_n-",n, ".csv")
 write.csv(ts_prediction, filename, row.names = F)
 
 
+# Control Test Trials ####
+ts_control_rt <- ts_raw %>% filter(test_control_counter >=0 & !(is.na(response))) %>% 
+  select(participant_id, trial_number = test_control_counter, sender, duration) %>% 
+  mutate(trial_number = trial_number + 1, 
+         response_time = ifelse(sender == "control_screen_response", 
+                                duration, duration + 15000)) %>% select(-duration, -sender)
 
-
-
-
-# Control ####
-ts_control<- ts_raw %>% filter(test_control_counter >=0 & 
+ts_control <- ts_raw %>% filter(test_control_counter >=0 & 
                                  !(is.na(response))) %>% 
-  select(participant_id, fsm_number, trial_number = test_control_counter, trial_type = exp_type, 
+  select(participant_id, fsm_number, test_condition, trial_number = test_control_counter, trial_type = exp_type, 
          state_1, response_1, state_2, state_3, option_1, option_2,
-         control_correct, response, response_correct = correct,
+         correctResponse, response, duration, response_correct = correct,
          option_1_p, option_2_p) %>% mutate(fsm_type = ifelse(fsm_number == 21, "easy", "hard"), 
                                             response_1 = ifelse(response_1 == "", "NA", response_1),
+                                            trial_number = trial_number + 1,
                                             trial_id = ifelse(trial_type == "visible", 
                                                               paste0(fsm_type,"_c_vis_", state_1, response_1, state_3), 
                                                               paste0(fsm_type,"_c_hid_", state_1, state_3, "-", option_1,"-",option_2))) %>% 
-  select(participant_id,fsm_type,trial_number,trial_type, trial_id, state_1:option_2_p)
+  select(participant_id,fsm_type,test_condition, trial_number,trial_type, trial_id, state_1:option_2_p)
+
+ts_control <- ts_control %>% left_join(ts_control_rt)
 
 n <- nrow(ts_control %>% group_by(participant_id) %>% count())
 filename <- paste0("data_preprocessed/", format(Sys.Date(),"%Y-%m-%d"), "_test_control_", "_an-exp2_n-",n, ".csv")
 write.csv(ts_control, filename, row.names = F)
 
-# Explanation ####
-ts_explanation <- ts_raw %>% filter(test_explanation_counter >=0 & 
-                                      !(is.na(response))) %>% 
-  select(participant_id, fsm_number, trial_number = test_explanation_counter, trial_type = exp_type, 
+# Explanation Test Trials ####
+ts_explanation_rt <- ts_raw %>% filter(test_explanation_counter >= 0 & !(is.na(response))) %>% 
+  select(participant_id, trial_number = test_explanation_counter, sender, duration) %>% 
+  mutate(trial_number = trial_number + 1, 
+         response_time = ifelse(sender == "explanation_screen_response", 
+                                duration, duration + 15000)) %>% select(-duration, -sender)
+
+ts_explanation <- ts_raw %>% filter(test_explanation_counter >= 0 & !(is.na(response))) %>% 
+  select(participant_id, fsm_number, test_condition, trial_number = test_explanation_counter, trial_type = exp_type, 
          state_1, response_1, state_2, response_2, state_3, explanation_1_decrease, explanation_2_decrease,
-         explanation_correct, response, response_correct = correct, option_1_p, option_2_p) %>% 
+         correctResponse, response, response_correct = correct, duration, option_1_p, option_2_p) %>% 
   mutate(fsm_type = ifelse(fsm_number == 21, "easy", "hard"),
+         trial_number = trial_number + 1, 
          trial_id = ifelse(trial_type == "visible", 
                            paste0(fsm_type,"_e_vis_", state_1, response_1, state_2, response_2, state_3), 
                            paste0(fsm_type,"_e_hid_", state_1, response_1, response_2, state_3))) %>% 
-  select(participant_id,fsm_type,trial_number,trial_type, trial_id, state_1:response_correct)
+  select(participant_id,fsm_type,test_condition, trial_number,trial_type, trial_id, state_1:response_correct)
+
+ts_explanation <- ts_explanation %>% left_join(ts_explanation_rt)
 
 n <- nrow(ts_explanation %>% group_by(participant_id) %>% count())
 filename <- paste0("data_preprocessed/", format(Sys.Date(),"%Y-%m-%d"), "_test_explanation_", "_an-exp2_n-",n, ".csv")
 
 write.csv(ts_explanation, filename, row.names = F)
+
+
+# Combine all trials into one dataframe ####
+ts <- ts_learning %>% bind_rows(ts_prediction, ts_control, ts_explanation) %>% 
+  mutate(trial_number = trial_number + 45, 
+         response_time_lessThan300ms = ifelse(response_time <= 300, 1, 0)) %>% 
+  unite(trial_order, c(learning_counter, trial_number), sep = "", remove = FALSE, na.rm = T) %>% 
+  mutate(trial_order = as.integer(trial_order), 
+         phase = ifelse(is.na(learning_counter), "test", "learning"), 
+         response_time_lessThan1000ms = ifelse(response_time < 1000, 1, 0), 
+         response_time_tooQuick = ifelse(phase == "learning" & response_time_lessThan300ms, 1, 
+                                         ifelse(phase == "test" & response_time_lessThan1000ms, 1, 0))) %>% 
+  arrange(participant_id, trial_order) %>% 
+  select(-learning_counter, -trial_number) %>% relocate(phase, .after = 3)
+
+n <- nrow(ts %>% group_by(participant_id) %>% count())
+filename <- paste0("data_preprocessed/", format(Sys.Date(),"%Y-%m-%d"), "_trials", "_an-exp2_n-",n, ".csv")
+write.csv(ts, filename, row.names = F)
+
 
 # Participants ####
 tmp_ss <- ts_raw %>% 

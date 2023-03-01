@@ -1,0 +1,67 @@
+---
+title: "Predicted accuracy"
+output: html_notebook
+---
+```{r}
+library(tidyverse)
+```
+
+```{r}
+ts <- read.csv("../data_preprocessed/2023-02-17_trials_an-exp2_n-24.csv")
+times <- ts %>% group_by(participant_id, phase) %>% summarise(sum = sum(response_time_tooQuick, na.rm = T))
+to_exclude <- times %>% filter(sum > 4) %>% pull(participant_id) 
+```
+
+
+```{r}
+ss_betas <-  read.csv("../data_preprocessed/betas_predicted_accuracy.csv") %>% mutate(across(participant_id:condition, as.factor)) %>% 
+  mutate(task = fct_recode(task,  "Prediction" = "prediction", "Control" = 'control', "Explanation" = "explanation"), 
+         task = fct_relevel(task,  c("Prediction","Control","Explanation"))) %>% filter(!(participant_id %in% to_exclude))
+
+ss_betas_fsm <- ss_betas %>% filter(condition %in% c("visible_fsm", "hidden_fsm", "hidden_an_fsm")) 
+
+ss_betas_mm <- ss_betas %>% filter(condition %in% c("visible_mm", "hidden_mm", "hidden_an_mm"))
+ss_betas_mm <- ss_betas_mm %>% 
+  mutate(condition = fct_relevel(condition, c("visible_mm", "hidden_mm", "hidden_an_mm")), 
+         condition = fct_recode(condition, "Visible" = "visible_mm", "Hidden" = "hidden_mm", "Hidden AN" = "hidden_an_mm"))
+
+ss_betas_fsm <- ss_betas_fsm %>% 
+  mutate(condition = fct_relevel(condition, c("visible_fsm", "hidden_fsm", "hidden_an_fsm")), 
+         condition = fct_recode(condition, "Visible" = "visible_fsm", "Hidden" = "hidden_fsm", "Hidden AN" = "hidden_an_fsm"))
+```
+
+
+```{r}
+plot1 <- ggplot(ss_betas_mm, aes(task, p_correct_r3, fill = task)) +
+  geom_boxplot(
+    width = 0.5,
+    # removing outliers
+    outlier.color = NA,
+    alpha = 0.4, 
+    position = position_dodge(width=0.8)
+  )   +  # Themes and Labels
+  labs(fill = "",
+    y = "Predicted Accuracy", 
+    x = ""
+  )  + 
+  geom_hline(yintercept = 0.5, color = "black", size = 10, alpha = 0.2)+
+  geom_point(position = position_jitterdodge(dodge.width = 0.8, jitter.width = 0.4), size = 2, alpha = 0.5, color = "red")+ 
+  scale_fill_manual(values = c("Prediction" = "#AA4499","Control" = "#999933", "Explanation" = "#6699CC")) + 
+  facet_grid(fsm~condition, labeller = labeller(fsm = c(easy = "Easy", hard = "Hard")))  + theme_classic()+  theme(legend.position = "top", strip.text.x = element_text(size = 12), axis.text = element_text(size = 12), text = element_text(size = 15), axis.text.x=element_blank(),axis.ticks.x=element_blank())
+plot1
+ggsave(filename = "fig-accuracy-mm.png", plot = plot1, path = '../outputs/', device = "png")
+```
+
+# Actual accuracy
+```{r}
+df_acc <- ts %>% group_by(participant_id, fsm_type, test_condition, trial_type) %>% filter(phase == "test" & !(participant_id %in% to_exclude)) %>% summarise(accuracy = mean(response_correct, na.rm = T))
+df_acc$test_condition <- factor(df_acc$test_condition, levels = c("prediction", "control", "explanation"))
+df_acc$trial_type <- factor(df_acc$trial_type, levels = c("visible", "hidden"))
+ggplot(df_acc, aes(trial_type, accuracy)) +
+    geom_boxplot(fun.data = mean_cl_boot) + 
+  geom_hline(yintercept = 0.5, color = "black", size = 1, alpha = 0.2)+ 
+  geom_point(position = position_jitter(0.1), size = 2, alpha = 0.5, color = "red")+ 
+  facet_grid(fsm_type~test_condition, labeller = labeller(fsm = c(easy = "Easy", hard = "Hard")))  + theme_classic()+  theme(legend.position = "top", strip.text.x = element_text(size = 12), axis.text = element_text(size = 12), text = element_text(size = 15))
+```
+
+

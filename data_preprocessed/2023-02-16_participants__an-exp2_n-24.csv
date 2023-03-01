@@ -1,0 +1,25 @@
+"participant_id","study_task","study_fsm","meta_timestamp","q_strategy","q_estimate","txt_advice","subject_age","subject_sex","subject_ethnicity","subject_timeTaken"
+1,"prediction","hard","2023-02-11T18:59:07.615Z","familiarity",10,"try different combinations of emojis during the practice phase to try to see if there is any pattern",22,"Female","White",565
+2,"explanation","hard","2023-02-11T19:14:34.206Z","guess",10,"Try to find a pattern if you can. That way you won&apos;t be guessing blindly. ",24,"Female","Black",428
+3,"control","hard","2023-02-11T19:20:38.145Z","intuition",10,"Pay attention to series of messages rather than responses to a single message",20,"Female","White",773
+4,"control","easy","2023-02-11T19:28:57.997Z","recall",13,"Try to create patterns that you can easily remember. Alternate, or possibly only use the same emoji.",23,"Male","White",712
+5,"prediction","easy","2023-02-11T19:29:38.507Z","familiarity",13,"Try to sense a pattern based on the responses you get from sending a particular emoji. Imagine the potential responses depending on what emoji has been sent already.",33,"Male","Mixed",645
+6,"prediction","hard","2023-02-11T19:29:33.211Z","intuition",13,"Test the pattern of response depending on the emoji you use",25,"Female","White",417
+7,"prediction","easy","2023-02-11T19:31:04.426Z","familiarity",10,"try to look for a pattern in responses",28,"Female","Asian",433
+8,"prediction","easy","2023-02-11T19:33:16.981Z","familiarity",10,"Use both emojis as much as you can and try your own patterns before it&apos;s over.",20,"Female","White",521
+9,"prediction","easy","2023-02-11T19:36:45.039Z","familiarity",13,"pay attention to the responses for each emoji",22,"Male","White",465
+10,"prediction","hard","2023-02-11T19:39:27.334Z","rule",10,"If you thumbs up it at some point will go to cool glasses. If you heart it will eventually end up O:.",25,"Male","Mixed",778
+11,"control","easy","2023-02-11T19:45:49.648Z","intuition",13,"Don&apos;t try to find a pattern. ",27,"Male","White",548
+12,"explanation","easy","2023-02-11T19:47:07.162Z","familiarity",13,"I would advise taking notes on the the patterns for every 2 responses. Then I would recommend studying it to see if there are trends.",31,"Male","White",622
+13,"explanation","hard","2023-02-11T20:32:38.827Z","rule",10,"If the bot responds with a surprised face, it means it hasn&apos;t seen that emoji in that block of chat yet. It cycles through emojis until it keeps repeating one when you keep pressing the same emoji to send.",20,"Female","White",458
+14,"explanation","hard","2023-02-11T20:39:20.253Z","rule",16,"see the chatbots pattern and memorize.",32,"Male","Other",2416
+15,"explanation","hard","2023-02-11T20:38:36.814Z","intuition",10,"Pay attention to how the chatbot reacts to the different emojis, and how the next reaction is.",30,"Male","White",529
+16,"control","hard","2023-02-11T21:37:59.566Z","recall",16,"Try different combinations",30,"Male","Asian",943
+17,"control","hard","2023-02-11T21:44:24.807Z","familiarity",10,"Try to pay attention to when you click each emoji in a row. The answers change based on your last emoji.",26,"Female","White",529
+18,"control","hard","2023-02-11T21:45:28.231Z","intuition",10,"Try to find any patterns in the responses, but otherwise go with your gut.",22,"Female","White",375
+19,"explanation","easy","2023-02-11T22:31:04.441Z","intuition",NA,"I hope you have a better sense of patterns than I do, because I have no idea how to advice you on this task. Good luck. ",34,"Female","White",573
+20,"explanation","easy","2023-02-11T22:38:50.253Z","rule",NA,"If the last two emoticons you sent are identical then choose your prior message. If the two emoticons are different then choose your most recent message.",31,"Male","White",758
+21,"explanation","easy","2023-02-11T22:54:30.158Z","familiarity",10,"I would say choose the thumbs up emoticon whenever the open mouth would reply. As well i would say to just choose which answer feels the most familiar to u.",20,"Male","Black",965
+22,"control","easy","2023-02-11T23:32:56.855Z","rule",16,"I would advise to use the blue heart to change the emoji and the thumbs up if they want to change it or keep it on the shocked face emoji. I would also tell them to pay attention to what the laughing crying face rule is because that one confused me. ",19,"Female","White",613
+23,"control","easy","2023-02-11T23:39:03.734Z","recall",16,"I will advise them to remember the previous section (memory from the previous exercise) and go from there",28,"Male","Black",765
+24,"prediction","hard","2023-02-12T00:07:12.650Z","guess",10,"I genuinely had no strategy. I was choosing randomly.",28,"Female","White",535
